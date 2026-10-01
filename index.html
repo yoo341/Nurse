@@ -1,1 +1,112 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#065a63"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Nurse Assist"><title>VET-ON-CALL – Nurse Assessment Support</title>
+<style>
+:root{--bg:#f4f9f7;--card:#fff;--tx:#14282a;--mu:#587073;--pr:#0b8a7a;--bd:#dbe7e4;--r:#d62839;--o:#e8890c;--g:#2b9348}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1b1c;--card:#172628;--tx:#e8f3f1;--mu:#9bb5b2;--pr:#2ec4b0;--bd:#26393b}}
+*{box-sizing:border-box}body{margin:0;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0);background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.45}
+header{background:linear-gradient(135deg,#0b8a7a,#065a63);color:#fff;padding:18px 16px;text-align:center}header h1{margin:0;font-size:1.5rem}header p{margin:4px 0 0;font-size:.88rem;opacity:.92}
+main{max-width:820px;margin:auto;padding:10px 12px 40px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin:10px 0}
+.warn{border-color:var(--o);font-size:.82rem}h2{margin:14px 0 4px;font-size:1.1rem}h3{margin:10px 0 4px;font-size:.9rem;color:var(--mu)}
+label{font-size:.85rem;color:var(--mu);display:grid;gap:4px}
+input:not([type=checkbox]),select,textarea{padding:9px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;width:100%}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 10px}
+.chk label{display:flex;align-items:center;gap:8px;color:var(--tx);padding:4px 0}
+.b{display:block;width:100%;text-align:center;text-decoration:none;background:var(--pr);color:#fff;border:0;border-radius:10px;padding:13px;font-weight:700;cursor:pointer;font-size:1rem;margin-top:10px}
+.b.w{background:#25d366;color:#053}.b.s{background:var(--mu)}
+.banner{border-radius:12px;padding:14px;font-weight:700;color:#fff;margin:10px 0}.l3{background:var(--r)}.l2{background:var(--o)}.l1{background:var(--g)}
+table{width:100%;border-collapse:collapse;font-size:.88rem}td,th{padding:5px 4px;border-bottom:1px solid var(--bd);text-align:left}
+.tag{padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:700;color:#fff}.t3{background:var(--r)}.t2{background:var(--o)}.t1{background:var(--g)}
+.bar{height:6px;background:var(--bd);border-radius:4px;margin:4px 0}.bar i{display:block;height:100%;background:var(--pr);border-radius:4px}
+.hi{color:var(--r);font-weight:700}small,.note{color:var(--mu);font-size:.78rem}
+</style></head><body>
+<header><h1>🩺 VET-ON-CALL · Assessment Support</h1><p>For the veterinary nurse: vitals check, triage and referral note</p></header>
+<main>
+<div class="card" id="inst" style="display:none;border-color:var(--pr)"><b>📲 Install Nurse Assist</b><p class="note" id="instt" style="margin:4px 0 8px">Add this tool to your home screen. It works offline in the field.</p><button class="b" id="instb" type="button" style="margin-top:0">Install app</button></div>
+<div class="card warn"><b>Decision support only.</b> This tool does not diagnose, prescribe or give drug doses. It helps you organise findings, judge urgency and hand over to the supervising veterinarian. Use your training and clinical judgement. Rabies and PPR are notifiable: report to veterinary authorities.</div>
 
+<div class="card"><h2 style="margin-top:0">1. Patient</h2>
+<div class="row"><label>Species<select id="sp"><option value="d">Dog</option><option value="c">Cat</option><option value="r">Goat / sheep</option></select></label>
+<label>Name / tag<input id="pn"></label><label>Age<input id="pa" placeholder="e.g. 4 months"></label><label>Owner & phone<input id="ow"></label></div></div>
+
+<div class="card"><h2 style="margin-top:0">2. Vital signs</h2>
+<div class="row"><label>Temp (°C)<input id="t" type="number" step="0.1"></label><label>Heart rate (bpm)<input id="hr" type="number"></label><label>Resp. rate (/min)<input id="rr" type="number"></label><label>CRT (seconds)<input id="crt" type="number" step="0.5"></label>
+<label>Gum colour<select id="mm"><option value="">Not checked</option><option>pink (normal)</option><option>pale/white</option><option>yellow</option><option>blue/purple</option><option>brick-red</option></select></label></div>
+<p class="note">Puppies and kittens normally have faster heart and respiratory rates than the ranges shown.</p></div>
+
+<div class="card"><h2 style="margin-top:0">3. Signs & history</h2><div id="sy"></div>
+<label style="margin-top:10px">Other notes<textarea id="nt" rows="2"></textarea></label></div>
+<button class="b" id="go">Analyse</button>
+<div id="res"></div>
+</main>
+<script>
+const CFG={nurse:"Your Name",vetWA:"233000000000"}; // supervising vet's WhatsApp, format 233XXXXXXXXX
+const RNG={d:{t:[38.3,39.2],hr:[60,140],rr:[10,30]},c:{t:[38.1,39.2],hr:[140,220],rr:[20,40]},r:{t:[38.5,40],hr:[60,90],rr:[12,30]}};
+const SYM=[["General",[["lethargy","Lethargy / weakness"],["anorexia","Not eating"],["fever","Fever"],["weight_loss","Weight loss"],["behaviour_change","Behaviour change / aggression"],["collapse","Collapse"],["seizures","Seizures / tremors"]]],
+["Digestive",[["vomiting","Vomiting"],["diarrhoea","Diarrhoea"],["bloody_diarrhoea","Bloody / black diarrhoea"],["swollen_abdomen","Swollen abdomen"],["retching","Unproductive retching"],["drooling","Drooling"],["pot_belly","Pot belly"]]],
+["Respiratory & head",[["cough","Cough"],["nasal_discharge","Nasal discharge"],["sneezing","Sneezing"],["eye_discharge","Eye discharge"],["heavy_panting","Heavy panting / laboured breathing"],["mouth_sores","Mouth sores"]]],
+["Skin & movement",[["itching","Itching / scooting"],["hair_loss","Hair loss"],["wound","Wound / swelling / abscess"],["lameness","Lameness"],["ticks","Ticks / fleas seen"]]],
+["Urinary & blood",[["straining_urine","Straining / unable to urinate"],["blood_urine","Blood or dark urine"],["pale_gums","Pale / white gums"],["bottle_jaw","Swelling under jaw"]]],
+["Background",[["unvaccinated","Unvaccinated / unknown vaccines"],["hot_weather","Hot weather / heat exposure"],["toxin_exposure","Possible poison / toxin exposure"],["fighting","Fighting / bite history"]]]];
+// [species, name, urgency 1-3, signs (first two = key signs), nursing actions, referral note]
+const C=[
+["d","Canine parvovirus",3,["bloody_diarrhoea","vomiting","lethargy","anorexia","fever","unvaccinated"],"Isolate from other dogs, use barrier nursing and disinfection, keep warm, monitor hydration, temperature and gum colour.","Urgent referral for testing and supportive treatment."],
+["d","Canine distemper",2,["nasal_discharge","eye_discharge","fever","cough","diarrhoea","seizures","unvaccinated"],"Isolate, keep warm and clean eyes and nose, record neurological signs.","Veterinary diagnosis needed."],
+["d","Tick-borne disease (babesiosis / ehrlichiosis)",2,["ticks","pale_gums","fever","lethargy","anorexia","blood_urine"],"Remove ticks safely, record gum colour and temperature, keep cool and rested.","Refer for blood tests and treatment."],
+["d","Gastroenteritis / dietary upset",1,["vomiting","diarrhoea","anorexia","lethargy"],"Record frequency, assess hydration, follow the vet's feeding advice.","See a vet if over 24 h, bloody, or in a puppy or elderly dog."],
+["d","Intestinal worms",1,["pot_belly","weight_loss","diarrhoea","vomiting","itching"],"Check faeces if possible, give hygiene advice, schedule vet-directed deworming.","Routine."],
+["dc","Skin parasites / mange / allergy",1,["itching","hair_loss","ticks","wound"],"Look for fleas and mites, protect wounds from scratching, wear gloves.","Routine; skin tests need a vet."],
+["d","Heatstroke",3,["heavy_panting","hot_weather","collapse","drooling","vomiting"],"Move to shade, cool with cool (not ice-cold) water, offer small sips, transport immediately.","Emergency."],
+["d","Bloat / gastric torsion (GDV)",3,["swollen_abdomen","retching","drooling","lethargy","heavy_panting"],"Keep calm and transport at once. Do not wait.","Emergency: surgery may be needed."],
+["d","Kennel cough / respiratory infection",1,["cough","nasal_discharge","sneezing","fever"],"Isolate from other dogs, use a harness instead of a collar, monitor breathing.","Refer if not eating or breathing fast."],
+["dcr","Wound / abscess",2,["wound","fever","lameness"],"Clean and dress per protocol, monitor swelling, discharge and temperature.","Refer if deep, a bite, or infected."],
+["dc","Rabies (rule out)",3,["behaviour_change","drooling","seizures","fighting","unvaccinated","collapse"],"Do NOT handle without protective gear. Isolate, avoid saliva and bites, wash any exposure with soap and water for 15 minutes and send the person to hospital.","Notifiable: veterinarian and public health at once."],
+["dcr","Poisoning / toxicity",3,["toxin_exposure","vomiting","drooling","seizures","collapse","lethargy"],"Remove from source, keep packaging or sample, do not induce vomiting unless the vet says so, transport.","Emergency."],
+["c","Urinary blockage / lower urinary tract disease",3,["straining_urine","blood_urine","vomiting","lethargy"],"Keep calm, do not press the bladder, transport at once (males are highest risk).","Emergency."],
+["c","Cat flu (upper respiratory infection)",1,["sneezing","nasal_discharge","eye_discharge","fever","anorexia"],"Wipe eyes and nose with saline-moistened cotton, keep warm, encourage eating, isolate.","Refer if not eating over 24 h or breathing with effort."],
+["c","Feline panleukopenia",3,["vomiting","diarrhoea","fever","lethargy","anorexia","unvaccinated"],"Isolate, barrier nursing, keep warm and monitor hydration.","Urgent referral."],
+["c","Gastroenteritis / hairball / dietary",1,["vomiting","diarrhoea","anorexia","lethargy"],"Record frequency, check hydration, follow the vet's feeding advice.","Refer if over 24 h or not eating."],
+["r","Gastrointestinal worms (haemonchosis)",2,["pale_gums","bottle_jaw","weight_loss","lethargy","diarrhoea"],"Check inner eyelid colour, score body condition, separate weak animals, advise pasture management.","Vet-directed deworming; anaemic animals are urgent."],
+["r","Pneumonia",2,["cough","nasal_discharge","fever","heavy_panting","lethargy","anorexia"],"Dry, ventilated shelter, record temperature and breathing rate, reduce stress.","Vet to diagnose and treat."],
+["r","Bloat",3,["swollen_abdomen","drooling","heavy_panting","lethargy"],"Keep the animal standing, remove lush feed, act urgently.","Emergency."],
+["r","PPR (peste des petits ruminants)",3,["fever","mouth_sores","nasal_discharge","eye_discharge","diarrhoea","cough"],"Isolate sick animals, restrict movement, wear gloves, disinfect.","Notifiable: report to veterinary services."],
+["r","Foot rot / lameness",1,["lameness","wound","lethargy"],"Inspect and clean hooves, keep the animal dry.","Refer if severe or many animals affected."],
+["r","Skin parasites (mange / lice / ticks)",1,["itching","hair_loss","ticks","weight_loss"],"Inspect skin, separate affected animals, advise hygiene.","Vet-directed treatment."]];
+const $=id=>document.getElementById(id),U=["","ROUTINE","URGENT","EMERGENCY"],SPN={d:"Dog",c:"Cat",r:"Goat/Sheep"};
+$("sy").innerHTML=SYM.map(([g,l])=>`<h3>${g}</h3><div class="chk">${l.map(([i,t])=>`<label><input type="checkbox" value="${i}">${t}</label>`).join("")}</div>`).join("");
+$("go").onclick=()=>{
+ const sp=$("sp").value,R=RNG[sp],sel=new Set([...document.querySelectorAll("#sy input:checked")].map(x=>x.value)),mm=$("mm").value;
+ let red=[];const vt=[];
+ if(mm.startsWith("pale"))sel.add("pale_gums");
+ if(mm.startsWith("blue")||mm.startsWith("pale")){red.push("Gum colour: "+mm)}
+ [["t","Temperature","°C"],["hr","Heart rate","bpm"],["rr","Resp. rate","/min"]].forEach(([k,n,u])=>{const v=parseFloat($(k).value);if(isNaN(v))return;const[lo,hi]=R[k],s=v<lo?"LOW":v>hi?"HIGH":"normal";vt.push([n,v+" "+u,s,lo+"–"+hi]);if(k=="t"&&v>hi)sel.add("fever");if(k=="t"&&(v>=41||v<=37))red.push("Temperature "+v+" °C")});
+ const crt=parseFloat($("crt").value);if(!isNaN(crt))vt.push(["CRT",crt+" s",crt>2?"PROLONGED":"normal","under 2 s"]);
+ if(crt>2)red.push("Prolonged CRT");
+ [["collapse","Collapse"],["seizures","Seizures"],["toxin_exposure","Possible poisoning"],["heavy_panting","Laboured breathing / heavy panting"],["straining_urine","Unable to urinate"]].forEach(([k,n])=>{if(sel.has(k))red.push(n)});
+ if(sel.has("swollen_abdomen")&&sel.has("retching"))red.push("Swollen abdomen with retching");
+ if(sel.has("pale_gums"))red.push("Pale gums");
+ if(!sel.size&&!vt.length){$("res").innerHTML='<div class="card">Tick at least one sign or enter vitals first.</div>';return}
+ const res=C.filter(c=>c[0].includes(sp)).map(c=>{const ids=c[3],w=ids.map((_,i)=>i<2?2:1);let m=0,n=0,key=false;ids.forEach((id,i)=>{if(sel.has(id)){m+=w[i];n++;if(i<2)key=true}});return{c,fit:m/w.reduce((a,b)=>a+b),n,key}}).filter(x=>x.n>=2||(x.c[2]==3&&x.key)).sort((a,b)=>b.fit-a.fit).slice(0,5);
+ red=[...new Set(red)];
+ const lvl=red.length?3:Math.max(1,...res.filter(x=>x.fit>=.4).map(x=>x.c[2]));
+ const msg=["","🟢 ROUTINE: nursing care and monitoring. Refer if no improvement or signs worsen.","⚠️ URGENT: contact the supervising veterinarian today.","🚨 EMERGENCY: stabilise and refer to the veterinarian immediately."][lvl];
+ let h=`<div class="banner l${lvl}">${msg}${red.length?`<br><small style="color:#fff">Red flags: ${red.join("; ")}</small>`:""}</div>`;
+ if(vt.length)h+=`<div class="card"><b>Vitals vs normal (${SPN[sp]})</b><table><tr><th></th><th>Value</th><th>Normal</th><th></th></tr>${vt.map(v=>`<tr><td>${v[0]}</td><td>${v[1]}</td><td>${v[3]}</td><td class="${v[2]=="normal"?"":"hi"}">${v[2]}</td></tr>`).join("")}</table></div>`;
+ h+=`<h2>Possible considerations (not a diagnosis)</h2>`+(res.length?res.map(x=>`<div class="card"><b>${x.c[1]}</b> <span class="tag t${x.c[2]}">${U[x.c[2]]}</span><div class="bar"><i style="width:${Math.round(x.fit*100)}%"></i></div><small>Sign match ${Math.round(x.fit*100)}%</small><p style="margin:6px 0"><b>Nursing actions:</b> ${x.c[4]}</p><p style="margin:0"><b>Referral:</b> ${x.c[5]}</p></div>`).join(""):'<div class="card">No clear pattern from the signs entered. Add more detail, or refer if you are concerned.</div>');
+ h+=`<div class="card"><h2 style="margin-top:0">Handover note for the veterinarian</h2><label>Actions you have taken<textarea id="ac" rows="2"></textarea></label><button class="b w" id="wb">Send to supervising vet (WhatsApp)</button><button class="b s" id="cp">Copy note</button></div>
+ <p class="note">Decision support only. Not a diagnosis or prescription.</p>`;
+ $("res").innerHTML=h;$("res").scrollIntoView({behavior:"smooth"});
+ const note=()=>`🩺 NURSE HANDOVER\nTriage: ${U[lvl]}${red.length?" ("+red.join("; ")+")":""}\nPatient: ${$("pn").value||"-"} | ${SPN[sp]} | ${$("pa").value||"age n/a"}\nOwner: ${$("ow").value||"-"}\nVitals: ${vt.map(v=>v[0]+" "+v[1]+" ["+v[2]+"]").join(", ")||"not recorded"}\nSigns: ${[...sel].map(s=>s.replace(/_/g," ")).join(", ")||"-"}\nNotes: ${$("nt").value||"-"}\nConsiderations (not a diagnosis): ${res.map(x=>x.c[1]).join("; ")||"none"}\nActions taken: ${$("ac").value||"-"}\nFrom: ${CFG.nurse}`;
+ $("wb").onclick=()=>window.open("https://wa.me/"+CFG.vetWA+"?text="+encodeURIComponent(note()),"_blank");
+ $("cp").onclick=()=>{const t=note();(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>$("cp").textContent="Copied ✓").catch(()=>prompt("Copy this note:",t))};
+};
+let dp;const ib=$("inst"),sa=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+addEventListener("beforeinstallprompt",e=>{e.preventDefault();dp=e;if(!sa)ib.style.display="block"});
+if(!sa&&/iphone|ipad|ipod/i.test(navigator.userAgent)){ib.style.display="block";$("instb").style.display="none";$("instt").textContent="On iPhone: tap Share, then Add to Home Screen."}
+$("instb").onclick=async()=>{if(!dp)return;dp.prompt();await dp.userChoice;ib.style.display="none"};
+addEventListener("appinstalled",()=>ib.style.display="none");
+if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script></body></html>
